@@ -229,4 +229,27 @@ function Makie.convert_arguments(P::SurfaceLike, field::Field, depth_level::Int6
 
 end
 
+"""
+    function Makie.convert_arguments(P::Mesh, field::Field, depth_level::Int64)
+Convert the arguments from a `Field` at `depth_level` to values that can be plotted as a
+`mesh!`. **Not working yet, might not be necessary to have it working though.**
+"""
+function Makie.convert_arguments(P::Mesh, field::Field, depth_level::Int64)
+
+    LX, LY, LZ = location(field)
+    grid = field.grid
+
+    _, (xvertices, yvertices, zvertices) = get_cartesian_nodes_and_vertices(grid, LX(), LY(), LZ())
+
+    quad_points3 = vcat([Point3.(xvertices[:, i, j], yvertices[:, i, j], zvertices[:, i, j]) for i in axes(xvertices, 2), j in axes(xvertices, 3)]...)
+    quad_faces = vcat([begin; j = (i-1) * 4 + 1; [j j+1  j+2; j+2 j+3 j]; end for i in 1:length(quad_points3)÷4]...)
+
+    x = [quad_points3[i][1] for i ∈ eachindex(quad_points3)]
+    y = [quad_points3[i][2] for i ∈ eachindex(quad_points3)]
+    z = [quad_points3[i][3] for i ∈ eachindex(quad_points3)]
+    colors_per_point = vcat(fill.(vec(interior(field, :, :, depth_level)), 4)...)
+
+    return convert_arguments(P, x, y, z)
+end
+
 end # module Imaginocean
